@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: finally-trading
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: LLM_MOCK
+        value: "true"
+      - key: PORT
+        value: "8000"
+      - key: OPENROUTER_API_KEY
+        sync: false

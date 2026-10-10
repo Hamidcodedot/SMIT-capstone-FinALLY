@@ -1,0 +1,21 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      - LLM_MOCK=true
+      - FINALLY_DB_PATH=/app/db/finally_e2e.db
+    ports:
+      - "8000:8000"
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.45.0-jammy
+    working_dir: /work
+    volumes:
+      - .:/work
+    depends_on:
+      - app
+    environment:
+      - BASE_URL=http://app:8000
+    command: sh -c "npm install && npx playwright test"

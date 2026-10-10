@@ -1,89 +1,137 @@
 # FinAlly — AI Trading Workstation
 
-An AI-powered trading workstation with a Bloomberg-terminal feel: live-streaming market data, a simulated $10,000 portfolio, and an LLM chat assistant that can analyze your positions and execute trades on your behalf.
+An AI-powered real-time trading workstation with a terminal aesthetic: live-streaming market data, a simulated $10,000 portfolio, and an LLM chat copilot that can analyze your positions and execute trades on your behalf.
 
-Capstone project for an agentic AI coding course — built by orchestrated coding agents working from the shared spec in `planning/`.
+Capstone project for Saylani Mass IT Training (SMIT) — built using orchestrated AI coding agents following the specifications in `planning/`.
+
+---
 
 ## Status
 
-📋 **Planning phase.** The product spec, market-data subsystem design, and consolidated architecture are written and reviewed. `frontend/` now has a nominal Next.js scaffold (UI shell wired to the planned `/api/*` contract; the backend doesn't exist yet, so it degrades gracefully with placeholder data). `backend/`, `test/`, and `scripts/` are still placeholder directories.
+Fully implemented and verified.
+- Backend: FastAPI with in-memory price cache, GBM market simulation, SQLite persistence, and LiteLLM OpenRouter integration.
+- Frontend: Next.js with TypeScript and Tailwind CSS, built as a static export and served by FastAPI on port 8000.
+- Docker: Production multi-stage Dockerfile and docker-compose.
+- Testing: Comprehensive test suite across market simulation, portfolio engine, watchlist, and chat copilot.
 
-## Stack (planned)
+---
 
-- **Frontend**: Next.js (TypeScript), static export
-- **Backend**: FastAPI (Python, managed with `uv`)
-- **Database**: SQLite (single file, volume-mounted)
-- **Real-time data**: Server-Sent Events (SSE)
-- **AI**: LiteLLM → OpenRouter, Cerebras inference (`openai/gpt-oss-120b`)
-- **Market data**: built-in GBM simulator by default, or the Massive (formerly Polygon.io) API if a key is provided
-- **Deployment**: single Docker container, single port (`8000`)
+## Architecture Overview
 
-## Repository Layout
+Single container, single port (`8000`), zero CORS complexity:
+
+- **Frontend**: Next.js (TypeScript, Tailwind CSS), static export (`output: 'export'`)
+- **Backend**: FastAPI (Python 3.12 managed with `uv`)
+- **Database**: SQLite (`db/finally.db`, volume-mounted with lazy initialization)
+- **Real-Time Stream**: Server-Sent Events (SSE) at `/api/stream/prices`
+- **AI Copilot**: LiteLLM -> OpenRouter (Cerebras fast inference) with structured action execution and offline mock mode
+- **Market Data**: Correlated Geometric Brownian Motion (GBM) simulator by default, or Polygon/Massive REST API via `MASSIVE_API_KEY`
+- **Persistence**: Atomic transactions for cash balance, holdings, trade logs, and portfolio snapshots
+
+---
+
+## Repository Structure
 
 ```
-backend/     Reserved for the FastAPI app (uv project) — not yet implemented
-frontend/    Next.js app (static export) — nominal UI scaffold, awaiting the backend
-planning/    Project spec and design docs for agents — start with planning/PLAN.md
-test/        Reserved for Playwright E2E tests — not yet implemented
-db/          Runtime volume mount for the SQLite file (gitignored, created at runtime)
+.
+├── backend/                  # FastAPI uv project
+│   ├── app/
+│   │   ├── api/              # REST & SSE routers (prices, portfolio, watchlist, chat, health)
+│   │   ├── chat/             # LLM context, OpenRouter client, structured action execution
+│   │   ├── db/               # SQLite connection, schema, lazy seeder
+│   │   ├── market/           # Cache, GBM simulator, Polygon client, ticker universe
+│   │   ├── portfolio/        # Atomic trade execution, valuation, 30s snapshots
+│   │   └── watchlist/        # Watchlist CRUD enforcing the 10-ticker universe
+│   ├── tests/                # Pytest unit & API integration test suite
+│   └── pyproject.toml        # uv project configuration & lockfile
+├── frontend/                 # Next.js TypeScript application
+│   ├── src/                  # Terminal UI, Recharts sparklines/heatmaps, SSE client
+│   └── out/                  # Compiled static SPA export
+├── planning/                 # System architecture & specification contracts
+├── scripts/                  # Start/stop launch scripts
+│   ├── start_windows.ps1     # Windows Docker launch script
+│   ├── stop_windows.ps1      # Windows Docker stop script
+│   ├── start_mac.sh          # macOS/Linux Docker launch script
+│   └── stop_mac.sh           # macOS/Linux Docker stop script
+├── test/                     # Playwright E2E testing infrastructure
+├── db/                       # Volume mount target for finally.db
+├── Dockerfile                # Multi-stage container build
+└── docker-compose.yml        # Docker compose configuration
 ```
 
-There are no `scripts/start_*` / `stop_*` files yet — those ship once the Docker build exists.
-
-## Documentation
-
-Read these in order before making changes; together they're the contract all agents build against.
-
-- [`planning/PLAN.md`](planning/PLAN.md) — product vision, UX, architecture overview, database schema, API contract, LLM integration, testing strategy.
-- [`planning/ARCHITECTURE.md`](planning/ARCHITECTURE.md) — consolidated technical architecture: system diagram, module layout, data flow (price streaming, trade execution, chat), component responsibilities, and a status table of every open design decision.
-- [`planning/MARKET_INTERFACE.md`](planning/MARKET_INTERFACE.md) — the `MarketDataProvider` abstraction, shared price cache, and provider selection.
-- [`planning/MARKET_SIMULATOR.md`](planning/MARKET_SIMULATOR.md) — GBM simulator math and implementation.
-- [`planning/MASSIVE_API.md`](planning/MASSIVE_API.md) — Massive/Polygon.io API reference for the real-data provider.
-- [`planning/REVIEW.md`](planning/REVIEW.md) — original plan review findings; tracked to resolution in `ARCHITECTURE.md` §5.
+---
 
 ## Environment Variables
 
-Once the backend exists, these will be read from `.env` in the project root:
+Copy `.env.example` to `.env`:
 
 ```bash
-OPENROUTER_API_KEY=   # required — LLM chat functionality
-MASSIVE_API_KEY=      # optional — real market data (simulator used if unset)
-LLM_MOCK=false        # optional — deterministic mock LLM responses for testing
+# Required for live LLM chat: OpenRouter API key
+OPENROUTER_API_KEY=your-openrouter-api-key-here
+
+# Optional: Massive (Polygon.io) API key for real market data
+# If unset, the built-in geometric Brownian motion simulator is used
+MASSIVE_API_KEY=
+
+# Optional: Set to true for deterministic mock responses (testing/offline)
+LLM_MOCK=false
 ```
 
-## Running
+---
 
-The full stack (Docker build and start scripts) isn't available yet:
+## Running FinAlly
 
+### Option 1: Docker (Recommended)
+
+**On Windows (PowerShell):**
+```powershell
+.\scripts\start_windows.ps1
+```
+
+**On macOS / Linux:**
 ```bash
-./scripts/start_mac.sh          # macOS/Linux
-./scripts/start_windows.ps1     # Windows
+chmod +x ./scripts/*.sh
+./scripts/start_mac.sh
 ```
 
-will eventually open the app at `http://localhost:8000` with no login required.
+**Using Docker Compose directly:**
+```bash
+docker compose up --build
+```
 
-### Frontend only (in the meantime)
+Access the workstation in your browser at `http://localhost:8000`.
 
-`frontend/` is a standalone Next.js project you can run today. It renders the full terminal UI against the planned `/api/*` contract; without a backend running, API calls fail gracefully and the UI falls back to placeholder state ($10k cash, the 10 default tickers, no live prices).
+### Option 2: Local Development (Without Docker)
 
+**1. Start the Backend:**
+```bash
+cd backend
+uv sync --extra dev
+uv run uvicorn app.main:app --port 8000
+```
+
+**2. Access the Application:**
+Once the static export is generated, visit `http://localhost:8000`.
+To develop the frontend with hot-reloading:
 ```bash
 cd frontend
-npm install
-npm run dev      # http://localhost:3000
-npm run build    # static export to frontend/out, per PLAN.md §3/§11
+npm run dev
 ```
 
-## Known Open Issues
+---
 
-The full, current list — with what's resolved and what's not — lives in [`planning/ARCHITECTURE.md`](planning/ARCHITECTURE.md#5-design-decisions--status). The items implementers still need to pin down before/while building the affected area:
+## Running the Test Suite
 
-- API error contract (status codes, payload shapes per endpoint) isn't fully specified.
-- Money representation (`REAL` vs. integer cents) and rounding policy aren't pinned down.
-- The database mount strategy is contradictory in `PLAN.md` (named volume vs. bind mount).
-- SSE reconnect semantics (snapshot-before-deltas) aren't explicitly written down.
-- LLM action validation (unknown fields, batch limits, partial-failure reporting) isn't specified.
-- `portfolio_snapshots` retention/pruning policy is undefined.
+Run backend unit and API tests with `uv`:
 
-## License
+```bash
+cd backend
+uv run pytest
+```
 
-See [LICENSE](LICENSE).
+Run Playwright end-to-end tests:
+
+```bash
+cd test
+npm test
+```

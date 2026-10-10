@@ -1,0 +1,13 @@
+services:
+  finally:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finally
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./db:/app/db
+    env_file:
+      - .env
+    restart: unless-stopped

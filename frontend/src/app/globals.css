@@ -4,24 +4,39 @@
 
 html,
 body {
-  background-color: #0d1117;
-  color: #e6edf3;
+  background-color: #080a0f;
+  color: #e2e8f0;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
 * {
   box-sizing: border-box;
 }
 
+/* Custom Bloomberg-style terminal scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0d1117;
+  background: #080a0f;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #232734;
-  border-radius: 4px;
+  background: #1f273b;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2d374d;
+}
+
+/* Subtle glow utility classes */
+.glow-emerald {
+  box-shadow: 0 0 16px -2px rgba(16, 185, 129, 0.15);
+}
+
+.glow-panel {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
 }

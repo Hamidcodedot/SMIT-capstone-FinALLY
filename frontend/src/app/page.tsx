@@ -134,11 +134,12 @@ export default function Home() {
   const selectedHistory = selectedTicker ? (history[selectedTicker] ?? []) : [];
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-screen flex-col overflow-x-hidden bg-base-bg text-slate-100">
       <Header totalValue={portfolio.total_value} cashBalance={portfolio.cash_balance} connectionState={connectionState} />
 
-      <main className="grid min-h-0 flex-1 grid-cols-[300px_1fr_360px] gap-3 p-3">
-        <div className="flex min-h-0 flex-col gap-3">
+      <main className="grid min-h-0 flex-1 grid-cols-1 gap-2.5 overflow-y-auto p-2.5 lg:grid-cols-[290px_1fr_340px] lg:overflow-hidden lg:gap-3 lg:p-3 xl:grid-cols-[310px_1fr_360px]">
+        {/* Left Column: Watchlist & Trade Deck */}
+        <div className="flex min-h-[380px] flex-col gap-2.5 lg:min-h-0 lg:gap-3">
           <div className="min-h-0 flex-1">
             <WatchlistPanel
               tickers={watchlistTickers}
@@ -153,16 +154,18 @@ export default function Home() {
           <TradeBar selectedTicker={selectedTicker} onTrade={handleTrade} errorMessage={tradeError} />
         </div>
 
-        <div className="grid min-h-0 grid-rows-[1.2fr_1fr_1fr] gap-3">
+        {/* Center Column: Chart, Heatmap/PnL, Positions Table */}
+        <div className="grid min-h-[600px] grid-rows-[1.2fr_1fr_1fr] gap-2.5 lg:min-h-0 lg:gap-3">
           <MainChart ticker={selectedTicker} points={selectedHistory} tick={selectedTick} />
-          <div className="grid min-h-0 grid-cols-2 gap-3">
+          <div className="grid min-h-0 grid-cols-1 gap-2.5 sm:grid-cols-2 lg:gap-3">
             <PortfolioHeatmap positions={portfolio.positions} />
             <PnLChart snapshots={snapshots} />
           </div>
           <PositionsTable positions={portfolio.positions} />
         </div>
 
-        <div className="min-h-0">
+        {/* Right Column: AI Assistant Chat */}
+        <div className="min-h-[420px] lg:min-h-0">
           <ChatPanel messages={chatMessages} onSend={handleSendChat} isLoading={chatLoading} />
         </div>
       </main>

@@ -6,9 +6,9 @@ interface SparklineProps {
   height?: number;
 }
 
-export default function Sparkline({ points, width = 90, height = 28 }: SparklineProps) {
+export default function Sparkline({ points, width = 84, height = 24 }: SparklineProps) {
   if (points.length < 2) {
-    return <div style={{ width, height }} className="text-[10px] text-gray-600">—</div>;
+    return <div style={{ width, height }} className="text-[10px] text-slate-600">—</div>;
   }
 
   const prices = points.map((p) => p.price);
@@ -16,6 +16,7 @@ export default function Sparkline({ points, width = 90, height = 28 }: Sparkline
   const max = Math.max(...prices);
   const range = max - min || 1;
   const isUp = prices[prices.length - 1] >= prices[0];
+  const strokeColor = isUp ? '#10b981' : '#f43f5e';
 
   const coords = prices.map((price, i) => {
     const x = (i / (prices.length - 1)) * width;
@@ -28,7 +29,7 @@ export default function Sparkline({ points, width = 90, height = 28 }: Sparkline
       <polyline
         points={coords.join(' ')}
         fill="none"
-        stroke={isUp ? '#26a65b' : '#e5484d'}
+        stroke={strokeColor}
         strokeWidth={1.5}
         strokeLinejoin="round"
         strokeLinecap="round"
